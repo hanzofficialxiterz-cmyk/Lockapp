@@ -1,1 +1,30 @@
 
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Extract project
+        run: tar -xzf LockApp-Android.tar.gz
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Install SDK
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+      - name: Install Gradle
+        run: |
+          curl -L https://services.gradle.org/distributions/gradle-8.0-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-8.0/bin" >> $GITHUB_PATH
+      - name: Build APK
+        working-directory: android-app
+        run: gradle assembleDebug
+      - uses: actions/upload-artifact@v3
+        with:
+          name: LockApp-APK
+          path: android-app/app/build/outputs/apk/debug/app-debug.apk
